@@ -56,6 +56,7 @@ if sys.platform == 'win32':
     WINDOWS = True
     include_dirs = []
     library_dirs = []
+    libraries = []
 else:
     FREETDS = osp.join(ROOT, 'freetds', 'nix_%s' % BITNESS)
     include_dirs = [
@@ -64,7 +65,10 @@ else:
     library_dirs = [
         osp.join(FREETDS, 'lib')
     ]
-    libraries = [ 'sybdb', 'rt' ]
+    libraries = [
+        'sybdb', # on Mandriva you may have to change it to sybdb_mssql
+        'rt',
+    ]
 
 if sys.platform == 'darwin':
     fink = '/sw/'
@@ -90,7 +94,7 @@ class build_ext(_build_ext):
     """
 
     def build_extensions(self):
-        global library_dirs, include_dirs
+        global library_dirs, include_dirs, libraries
 
         if WINDOWS:
             # Detect the compiler so we can specify the correct command line switches
@@ -131,7 +135,6 @@ class build_ext(_build_ext):
                 e.library_dirs.append(osp.join(FREETDS, 'lib'))
 
         else:
-            libraries = [ "sybdb" ]   # on Mandriva you may have to change it to sybdb_mssql
             for e in self.extensions:
                 e.libraries.extend(libraries)
         _build_ext.build_extensions(self)
