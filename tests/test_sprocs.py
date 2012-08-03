@@ -22,8 +22,8 @@ FIXED_TYPES = (
 
 VARIABLE_TYPES = (
     ('Char', 4),
-    ('Text',None),
     ('VarChar', 4)
+    ('Text', None), # Leave this one always in the last position
 )
 
 class TestFixedTypeConversion(object):
