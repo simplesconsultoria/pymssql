@@ -1,4 +1,10 @@
-build
+build/
+dist/
+tests/tmp/
 *.c
+*.egg-info*
+*komodo*
+*.pyc
+*.pyd
 *.so
 tests/tests.cfg
