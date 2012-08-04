@@ -149,10 +149,12 @@ class clean(_clean):
         for ext in self.distribution.ext_modules:
             cy_sources = [s for s in ext.sources if s.endswith('.c')]
             for cy_source in cy_sources:
-                so_built = cy_source[:-1] + 'so'
-                if osp.exists(so_built):
-                    log.info('removing %s', so_built)
-                    os.remove(so_built)
+                root, ext = osp.splitext(cy_source)
+                for binext in ('.so', '.pyd'):
+                    so_built = root + binext
+                    if osp.exists(so_built):
+                        log.info('removing %s', so_built)
+                        os.remove(so_built)
 
 
 class release(Command):
