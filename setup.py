@@ -147,9 +147,9 @@ class clean(_clean):
     def run(self):
         _clean.run(self)
         for ext in self.distribution.ext_modules:
-            cy_sources = [s for s in ext.sources if s.endswith('.pyx')]
+            cy_sources = [s for s in ext.sources if s.endswith('.c')]
             for cy_source in cy_sources:
-                so_built = cy_source[:-3] + 'so'
+                so_built = cy_source[:-1] + 'so'
                 if osp.exists(so_built):
                     log.info('removing %s', so_built)
                     os.remove(so_built)
