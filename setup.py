@@ -88,60 +88,57 @@ if sys.platform == 'darwin':
     ]
 
 # TODO: Still need to remove reliance on this class for win32
-class deprecated_build_ext(build_ext):
+class win32_build_ext(build_ext):
     """
-    Subclass the Cython build_ext command.
+    Subclass the Cython build_ext command so we can detect the compiler so we
+    can specify the correct command line switches and libraries on the win32
+    platform.
     """
 
     def build_extensions(self):
         global library_dirs, include_dirs, libraries
 
-        if WINDOWS:
-            # Detect the compiler so we can specify the correct command line switches
-            # and libraries
-            from distutils.cygwinccompiler import Mingw32CCompiler
-            extra_cc_args = []
-            # Distutils bug: self.compiler can be a string or a CCompiler
-            # subclass instance, see http://bugs.python.org/issue6377
-            if isinstance(self.compiler, str):
-                compiler = self.compiler
-            elif isinstance(self.compiler, Mingw32CCompiler):
-                compiler = 'mingw32'
-                freetds_dir = 'ming'
-                extra_cc_args = [
-                    '-Wl,-allow-multiple-definition',
-                    '-Wl,-subsystem,windows-mthreads',
-                    '-mwindows',
-                    '-Wl,--strip-all'
-                ]
-                libraries = [
-                    'libiconv', 'iconv',
-                    'sybdb',
-                    'ws2_32', 'wsock32', 'kernel32',
-                ]
-            else:
-                compiler = 'msvc'
-                freetds_dir = 'vs2008'
-                libraries = [
-                    'db-lib', 'tds',
-                    'ws2_32', 'wsock32', 'kernel32', 'shell32',
-                ]
-
-            FREETDS = osp.join(ROOT, 'freetds', '{0}_{1}'.format(freetds_dir, BITNESS))
-            for e in self.extensions:
-                e.extra_compile_args.extend(extra_cc_args)
-                e.libraries.extend(libraries)
-                e.include_dirs.append(osp.join(FREETDS, 'include'))
-                e.library_dirs.append(osp.join(FREETDS, 'lib'))
-
+        from distutils.cygwinccompiler import Mingw32CCompiler
+        extra_cc_args = []
+        # Distutils bug: self.compiler can be a string or a CCompiler
+        # subclass instance, see http://bugs.python.org/issue6377
+        if isinstance(self.compiler, str):
+            compiler = self.compiler
+        elif isinstance(self.compiler, Mingw32CCompiler):
+            compiler = 'mingw32'
+            freetds_dir = 'ming'
+            extra_cc_args = [
+                '-Wl,-allow-multiple-definition',
+                '-Wl,-subsystem,windows-mthreads',
+                '-mwindows',
+                '-Wl,--strip-all'
+            ]
+            libraries = [
+                'libiconv', 'iconv',
+                'sybdb',
+                'ws2_32', 'wsock32', 'kernel32',
+            ]
         else:
-            for e in self.extensions:
-                e.libraries.extend(libraries)
-        _build_ext.build_extensions(self)
+            compiler = 'msvc'
+            freetds_dir = 'vs2008'
+            libraries = [
+                'db-lib', 'tds',
+                'ws2_32', 'wsock32', 'kernel32', 'shell32',
+            ]
+
+        FREETDS = osp.join(ROOT, 'freetds', '{0}_{1}'.format(freetds_dir, BITNESS))
+        for e in self.extensions:
+            e.extra_compile_args.extend(extra_cc_args)
+            e.libraries.extend(libraries)
+            e.include_dirs.append(osp.join(FREETDS, 'include'))
+            e.library_dirs.append(osp.join(FREETDS, 'lib'))
+
+        build_ext.build_extensions(self)
+
 
 class clean(_clean):
     """
-    Subclass clean so it removes all the Cython generated C files.
+    Subclass clean so it removes all generated files.
     """
 
     def run(self):
@@ -251,11 +248,18 @@ class release(Command):
         if not url:
             log.error('upload to googlecode failed: %s', reason)
 
+
 class DevelopCmd(STDevelopCmd):
     def run(self):
         # add in the nose plugin only when we are using the develop command
         self.distribution.entry_points['nose.plugins'] = ['pymssql_config = tests.nose_plugin:ConfigPlugin']
         STDevelopCmd.run(self)
+
+
+if WINDOWS:
+    build_ext_class = win32_build_ext
+else:
+    build_ext_class = build_ext
 
 setup(
     name  = 'pymssql',
@@ -267,7 +271,7 @@ setup(
     license = 'LGPL',
     url = 'http://pymssql.sourceforge.net',
     cmdclass = {
-        'build_ext': build_ext,
+        'build_ext': build_ext_class,
         'clean': clean,
         'release': release,
         'develop': DevelopCmd
