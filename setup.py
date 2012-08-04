@@ -100,12 +100,7 @@ class win32_build_ext(build_ext):
 
         from distutils.cygwinccompiler import Mingw32CCompiler
         extra_cc_args = []
-        # Distutils bug: self.compiler can be a string or a CCompiler
-        # subclass instance, see http://bugs.python.org/issue6377
-        if isinstance(self.compiler, str):
-            compiler = self.compiler
-        elif isinstance(self.compiler, Mingw32CCompiler):
-            compiler = 'mingw32'
+        if isinstance(self.compiler, Mingw32CCompiler):
             freetds_dir = 'ming'
             extra_cc_args = [
                 '-Wl,-allow-multiple-definition',
@@ -119,7 +114,6 @@ class win32_build_ext(build_ext):
                 'ws2_32', 'wsock32', 'kernel32',
             ]
         else:
-            compiler = 'msvc'
             freetds_dir = 'vs2008'
             libraries = [
                 'db-lib', 'tds',
